@@ -34,10 +34,11 @@ describe('Fine-Grained Permissions (E2E)', () => {
     });
 
     // Test verify documents route which requires documents.verify
-    await request(app.getHttpServer())
+    const res = await request(app.getHttpServer())
       .post('/documents/some-doc-id/verify')
-      .set('Authorization', `Bearer ${token}`)
-      .expect(403);
+      .set('Authorization', `Bearer ${token}`);
+      
+    expect(res.status).toBe(403);
   });
 
   it('should keep existing @Roles(ADMIN) routes working backwards compatibly', async () => {
