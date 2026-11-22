@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CachedSettingsProvider } from './cached-settings.provider';
 
@@ -11,7 +11,7 @@ export interface SettingDefinition {
 }
 
 @Injectable()
-export class SettingsService {
+export class SettingsService implements OnModuleInit {
   private readonly definitions: Map<string, SettingDefinition> = new Map([
     ['escrow_timeout_hours', { key: 'escrow_timeout_hours', type: 'number', defaultValue: 72, description: 'Escrow timeout in hours', validator: (v) => typeof v === 'number' && v > 0 }],
     ['anchoring_threshold', { key: 'anchoring_threshold', type: 'number', defaultValue: 1000, description: 'Anchoring threshold amount', validator: (v) => typeof v === 'number' && v >= 0 }],
@@ -24,6 +24,39 @@ export class SettingsService {
     private readonly prisma: PrismaService,
     private readonly cachedProvider: CachedSettingsProvider,
   ) {}
+
+  async onModuleInit() {
+    try {
+      await this.prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "system_settings" (
+          "key" TEXT NOT NULL PRIMARY KEY,
+          "value" TEXT NOT NULL,
+          "type" TEXT NOT NULL,
+          "description" TEXT,
+          "updatedBy" TEXT,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await this.prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "system_setting_versions" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "settingKey" TEXT NOT NULL,
+          "value" TEXT NOT NULL,
+          "version" INTEGER NOT NULL,
+          "actor" TEXT,
+          "reason" TEXT,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "system_setting_versions_settingKey_fkey" FOREIGN KEY ("settingKey") REFERENCES "system_settings"("key") ON DELETE CASCADE ON UPDATE CASCADE
+        );
+      `);
+      await this.prisma.$executeRawUnsafe(`
+        CREATE INDEX IF NOT EXISTS "system_setting_versions_settingKey_idx" ON "system_setting_versions"("settingKey");
+      `);
+    } catch (e) {
+      // Table might already exist or DB restricted
+    }
+  }
 
   public getDefinition(key: string): SettingDefinition {
     const def = this.definitions.get(key);
