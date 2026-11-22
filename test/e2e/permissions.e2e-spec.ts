@@ -35,7 +35,7 @@ describe('Fine-Grained Permissions (E2E)', () => {
 
     // Test verify documents route which requires documents.verify
     await request(app.getHttpServer())
-      .post('/documents/verify/some-doc-id')
+      .post('/documents/some-doc-id/verify')
       .set('Authorization', `Bearer ${token}`)
       .expect(403);
   });
