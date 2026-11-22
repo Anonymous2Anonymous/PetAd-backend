@@ -19,6 +19,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './logging/logging.interceptor';
 import { JobsModule } from './jobs/jobs.module';
 import { AdminModule } from './admin/admin.module';
+import { ModerationModule } from './moderation/moderation.module';
 import { EventLedgerModule } from './event-ledger/event-ledger.module';
 import { configuration } from './config/configuration';
 
@@ -54,6 +55,7 @@ import { configuration } from './config/configuration';
     LoggingModule,
     JobsModule,
     AdminModule,
+    ModerationModule,
     EventLedgerModule,
   ],
 
