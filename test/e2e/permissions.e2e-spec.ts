@@ -27,6 +27,8 @@ describe('Fine-Grained Permissions (E2E)', () => {
   });
 
   it('should allow FINANCE user to access refund but not documents.verify', async () => {
+    // Ensure refund and document verification endpoints exist or are properly handled
+
     const token = jwtService.sign({
       sub: 'finance-user-id',
       email: 'finance@petad.org',
